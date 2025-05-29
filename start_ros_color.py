@@ -20,14 +20,14 @@ def init_pins():
 
 def startRos():
     isBluestr = "False"
-    xPos = "0.225"
-    yPos = "0.83"
+    xPos = "0.275"
+    yPos = "0.775"
     zRot = "-1.570796327"
 
     if isBlue():
         isBluestr = "True"
-        xPos = "-0.225"
-        yPos = "0.83"
+        xPos = "-0.275"
+        yPos = "0.775"
         zRot = "-1.570796327"
     bashCommand = "ros2 launch krabi_bringup krabi_launch.py isSimulation:=False isBlue:=" + isBluestr + " useLidarLoc:=False useTimInsteadOfNeato:=True xRobotPos:=" + xPos + " yRobotPos:=" + yPos + " zRobotOrientation:=" + zRot # Works, but killing does not :/
     #bashCommand = "ros2 launch krabi_bringup krabossColor.launch.py isSimulation:=False isBlue:=" + isBluestr + " useLidarLoc:=False useTimInsteadOfNeato:=True"
