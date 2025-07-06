@@ -1,0 +1,2 @@
+# m h  dom mon dow   command
+*/1 * * * * /path/to/log_cleanup.sh >> /var/log/log_cleanup.log 2>&1
