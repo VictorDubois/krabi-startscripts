@@ -1,0 +1,15 @@
+[Unit]
+Description=Krabi robot ROS2 startup
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=ubuntu
+#EnvironmentFile=/home/ubuntu/krabi_ws/install/setup.bash
+#ExecStart=/opt/ros/humble/bin/ros2 launch krabi_bringup krabi_launch.py isSimulation:=false isBlue:=%i useLidarLoc:=false useTimInsteadOfNeato:=true
+ExecStart=/home/ubuntu/startScripts/start_ros_color.sh
+#ExecStart=/home/ubuntu/start_ros_color.sh %i
+
+[Install]
+WantedBy=multi-user.target

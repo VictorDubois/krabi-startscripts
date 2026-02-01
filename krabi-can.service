@@ -1,0 +1,8 @@
+[Unit]
+Description=CAN for the Krabi robot
+
+[Service]
+ExecStart=/usr/sbin/ip link set can0 up type can bitrate 500000
+
+[Install]
+WantedBy=multi-user.target

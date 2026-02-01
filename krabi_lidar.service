@@ -1,0 +1,14 @@
+[Unit]
+Description=Krabi robot startup
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=ubuntu
+ExecStart=/home/ubuntu/startScripts/start_ros_lidar.sh
+
+[Install]
+WantedBy=multi-user.target
