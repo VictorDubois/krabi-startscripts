@@ -3,8 +3,8 @@
 # Set your folder path
 LOG_DIR="/var/log/krabi"
 
-# Max allowed size in kilobytes (20 GB = 20 * 1024 * 1024 = 20971520 KB)
-MAX_SIZE=20971520
+# Max allowed size in kilobytes (10 GB = 10 * 1024 * 1024 = 10971520 KB)
+MAX_SIZE=10971520
 
 # Get folder size in KB
 DIR_SIZE=$(du -sk "$LOG_DIR" | cut -f1)
