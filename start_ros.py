@@ -1,87 +1,97 @@
 #!/usr/bin/env python3
+# sudo apt-get install python3-gpiod
+# pip install gpiod
 from time import sleep
 import subprocess
-import rclpy
-import sys
-from std_msgs.msg import Bool
-from std_msgs.msg import String
-import RPi.GPIO as GPIO # python3 -m pip install RPi.GPIO
-#python3 -m pip install pyyaml
-#sudo apt install rpi.gpio-common
+import gpiod
+from gpiod.line import Direction, Value, Bias
 
-poweroff_chan = 36
-tirette_chan = 38
-color_chan = 40
-GPIO.setmode(GPIO.BOARD)
+# --- BCM GPIO numbers (Pi 5: 40-pin header on gpiochip4) ---
+# BOARD 36 -> BCM 16  (poweroff) — owned exclusively by this script
+# BOARD 38 -> BCM 20  (tirette)  — shared with gpio.py, polled with try/except
+poweroff_chan = 16
+tirette_chan  = 20
 
-def init_pins():
-    chan_list = [poweroff_chan, tirette_chan, color_chan]
-    for channel in chan_list:
-        print("init channel " + str(channel))
-        GPIO.setup(channel, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO_CHIP = "/dev/gpiochip4"  # Pi 5: 40-pin header is on gpiochip4 (pinctrl-rp1)
+
+chip = gpiod.Chip(GPIO_CHIP)
+
+def read_poweroff():
+    with chip.request_lines(
+        config={poweroff_chan: gpiod.LineSettings(direction=Direction.INPUT, bias=Bias.PULL_UP)},
+        consumer="start_ros_poweroff"
+    ) as req:
+        return req.get_value(poweroff_chan) == Value.ACTIVE
+
+def read_tirette():
+    """Returns True (high/not inserted) or False (low/inserted), or None if pin is busy."""
+    try:
+        with chip.request_lines(
+            config={tirette_chan: gpiod.LineSettings(direction=Direction.INPUT, bias=Bias.PULL_UP)},
+            consumer="start_ros_tirette"
+        ) as req:
+            return req.get_value(tirette_chan) == Value.ACTIVE
+    except OSError:
+        return None  # gpio.py is holding the pin, skip this poll
 
 def killRos():
     print("sudo systemctl stop krabi_color")
-    bashCommand = "sudo systemctl stop krabi_color"
-    subprocess.Popen(bashCommand.split())
+    subprocess.Popen("sudo systemctl stop krabi_color".split())
     sleep(2)
-    #subprocess.run(["killall", "ros2"])
 
 def startRos():
-    isBluestr = "False"
-    if isBlue():
-        isBluestr = "True"
-    #bashCommand = "ros2 launch krabi_bringup krabi_launch.py isSimulation:=False isBlue:=" + isBluestr + " useLidarLoc:=False useTimInsteadOfNeato:=True" # Works, but killing does not :/
-    #bashCommand = "sudo systemctl restart krabi_isBlue@" + isBluestr
     print("sudo systemctl restart krabi_color")
-    bashCommand = "sudo systemctl restart krabi_color"
-    #bashCommand = "ros2 launch krabi_bringup krabossColor.launch.py isSimulation:=False isBlue:=" + isBluestr + " useLidarLoc:=False useTimInsteadOfNeato:=True"
-    #bashCommand = "/usr/bin/nice -n -20 ros2 launch krabi_bringup krabossColor.launch.py isSimulation:=False isBlue:=" + isBluestr + " useLidarLoc:=False useTimInsteadOfNeato:=True"
-    subprocess.Popen(bashCommand.split())
+    subprocess.Popen("sudo systemctl restart krabi_color".split())
 
 def startLidarService():
     print("sudo systemctl restart krabi_lidar")
-    bashCommand = "sudo systemctl restart krabi_lidar"
-    subprocess.Popen(bashCommand.split())
-
-def isBlue():
-    blue = GPIO.input(color_chan)
-    print("Is blue: " + str(blue))
-    return blue
+    subprocess.Popen("sudo systemctl restart krabi_lidar".split())
 
 def turn_off_robot():
     print("Poweroff!!!")
-    #bashCommand = "sudo poweroff"
-    bashCommand = "sudo /usr/sbin/shutdown -h now"
-    process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    output, error = process.communicate()
+    subprocess.Popen(
+        "sudo /usr/sbin/shutdown -h now".split(), stdout=subprocess.PIPE
+    ).communicate()
 
 def checkPowerOff():
-    if not GPIO.input(poweroff_chan):
-        turn_off_robot()
+    try:
+        if not read_poweroff():
+            turn_off_robot()
+    except OSError:
+        pass  # retry next cycle
 
 if __name__ == '__main__':
-    init_pins()
-    program = None
-    # Start lidars, as they are too slow to shutdown
-    #bashCommand = "ros2 launch krabi_bringup krabi_lidars_launch.py useLidarLoc:=False useTimInsteadOfNeato:=True"
-    #subprocess.Popen(bashCommand.split())
-    #startLidarService()
-    while True:
-        while GPIO.input(tirette_chan):
-            sleep(0.1)
-            checkPowerOff()
+    try:
+        tirette_state = None
 
-        if program:
-            program.terminate()
-        killRos()
-        checkPowerOff()
-        program = startRos()
-        sleep(1)  # debounce
-
-        while not GPIO.input(tirette_chan):
-            checkPowerOff()
+        # Wait for first successful tirette read
+        while tirette_state is None:
+            tirette_state = read_tirette()
             sleep(0.1)
 
-        sleep(1)  # debounce
+        while True:
+            # Wait for tirette insertion (goes low = False)
+            while tirette_state is not False:
+                sleep(0.1)
+                checkPowerOff()
+                val = read_tirette()
+                if val is not None:
+                    tirette_state = val
 
+            killRos()
+            checkPowerOff()
+            startRos()
+            sleep(1)  # debounce
+
+            # Wait for tirette removal (goes high = True)
+            while tirette_state is not True:
+                sleep(0.1)
+                checkPowerOff()
+                val = read_tirette()
+                if val is not None:
+                    tirette_state = val
+
+            sleep(1)  # debounce
+
+    finally:
+        chip.close()
