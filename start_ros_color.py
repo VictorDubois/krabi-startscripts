@@ -26,12 +26,12 @@ def isBlue():
 def startRos():
     isBluestr = "True" if isBlue() else "False"
 
-    xPos = "1.25"
+    xPos = "1.1"
     yPos = "-0.75"
     zRot = "1.570796327"
 
     if isBluestr == "True":
-        xPos = "-1.25"
+        xPos = "-1.1"
         yPos = "-0.75"
         zRot = "1.570796327"
 
