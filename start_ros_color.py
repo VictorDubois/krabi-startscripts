@@ -44,7 +44,7 @@ def startRos():
         " xRobotPos:=" + xPos +
         " yRobotPos:=" + yPos +
         " zRobotOrientation:=" + zRot +
-        " use_aruco:=True" + 
+        " use_caisse_detector:=True" +
         " do_record:=True"
     )
     print(bashCommand)
