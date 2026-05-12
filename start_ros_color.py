@@ -26,14 +26,25 @@ def isBlue():
 def startRos():
     isBluestr = "True" if isBlue() else "False"
 
-    xPos = "1.1"
-    yPos = "-0.75"
+
+    # 115mm côté
+    # 89mm arrière
+    # 119.5mm avant
+    xPos = "1.110"
+    yPos = "-0.722"
     zRot = "1.570796327"
 
     if isBluestr == "True":
-        xPos = "-1.1"
-        yPos = "-0.75"
-        zRot = "1.570796327"
+        xPos = "-1.110"
+        yPos = "-0.692"
+        zRot = "-1.570796327"
+
+    do_record = "True"
+    try:
+        _ = open("/var/log/krabi/do_record")
+    except FileNotFoundError:
+        # doesn’t exist
+        do_record = "False"
 
     bashCommand = (
         "ros2 launch krabi_bringup krabi_launch.py"
@@ -45,7 +56,7 @@ def startRos():
         " yRobotPos:=" + yPos +
         " zRobotOrientation:=" + zRot +
         " use_caisse_detector:=True" +
-        " do_record:=True"
+        " do_record:=" + do_record
     )
     print(bashCommand)
     subprocess.Popen(bashCommand.split(), stdout=sys.stdout, stderr=sys.stderr).communicate()
