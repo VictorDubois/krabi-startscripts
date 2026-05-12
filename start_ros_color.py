@@ -30,12 +30,16 @@ def startRos():
     # 115mm côté
     # 89mm arrière
     # 119.5mm avant
-    xPos = "1.110"
-    yPos = "-0.722"
+
+    # cale côté : 144mm
+    # cale arrière jaune : 219mm
+    # cale arrière bleu : 188.5mm
+    xPos = "1.159"
+    yPos = "-0.692"
     zRot = "1.570796327"
 
     if isBluestr == "True":
-        xPos = "-1.110"
+        xPos = "-1.159"
         yPos = "-0.692"
         zRot = "-1.570796327"
 
