@@ -65,7 +65,11 @@ dtoverlay=vc4-kms-v3d,cma-128
 dtoverlay=dwc2,dr_mode=host
 
 [all]
+# CAN HAT
 dtparam=spi=on
-dtoverlay=mcp2515-can1,oscillator=16000000,interrupt=25
-dtoverlay=mcp2515-can0,oscillator=16000000,interrupt=23
+dtoverlay=mcp2515-can0,oscillator=12000000,interrupt=25,spimaxfrequency=2000000
 dtoverlay=spi-bcm2835-overlay
+
+# Raspi5 USB
+usb_max_current_enable=1
+
