@@ -1,0 +1,15 @@
+[Unit]
+Description=Krabi robot GUI
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=ubuntu
+ExecStart=/home/ubuntu/krabi_gui/startKrabuiGui.sh
+
+[Install]
+WantedBy=multi-user.target
+
